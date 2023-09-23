@@ -85,14 +85,29 @@ void excute_R(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t shamt,uint32_t funct)
     switch (funct)
     {
     case funct_add:
-        NEXT_STATE.REGS[rd] = (int)CURRENT_STATE.REGS[rs]+(int)CURRENT_STATE.REGS[rt];
+        int64_t tmp = (int64_t)CURRENT_STATE.REGS[rs]+(int64_t)CURRENT_STATE.REGS[rt];
+        if(tmp > INT32_MAX || tmp < INT32_MIN)  // overflow
+        {
+            printf('integer overflow exception!\n');
+        }
+        else{
+            NEXT_STATE.REGS[rd] = tmp;
+        }
         break;
 
     case funct_addu:
-        NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rs]+CURRENT_STATE.REGS[rt];
+        uint64_t tmp = (uint64_t)CURRENT_STATE.REGS[rs]+(uint64_t)CURRENT_STATE.REGS[rt];
+        if(tmp > UINT32_MAX)  // overflow
+        {
+            printf('integer overflow exception!\n');
+        }
+        else{
+            NEXT_STATE.REGS[rd] = tmp;
+        }
         break;
 
     case funct_sub:
+
         NEXT_STATE.REGS[rd] = (int)CURRENT_STATE.REGS[rs]-(int)CURRENT_STATE.REGS[rt];
         break;
 
@@ -209,6 +224,9 @@ void excute_R(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t shamt,uint32_t funct)
                 printf('address is not word-aligned!\n');
                 exit(1);
             }
+        if(rd == 0){
+            rd =31;
+        }
         NEXT_STATE.REGS[rd] = CURRENT_STATE.PC + 8;
         NEXT_STATE.PC = CURRENT_STATE.REGS[rs];
         break;
@@ -224,7 +242,160 @@ void excute_R(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t shamt,uint32_t funct)
     }
 }
 
-void excute_I_and_J(uint32_t op , uint32_t rs,uint32_t rt,uint32_t rd,uint32_t imm,uint32_t target){
+void excute_I_and_J(uint32_t op , uint32_t rs,uint32_t rt,uint32_t rd,uint32_t imm,uint32_t uimm,uint32_t target){
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+
+    switch (op)
+    {
+    case op_addi:
+        int64_t tmp = (int)CURRENT_STATE.REGS[rs]+imm;
+        if(tmp > INT32_MAX || tmp < INT32_MIN){
+            printf('integer overflow!\n');
+        }
+        else{
+            NEXT_STATE.REGS[rt]=(int32_t)tmp;
+        }
+            break;
+        
+    case op_addiu:
+        NEXT_STATE.REGS[rt] = CURRENT_STATE.REGS[rs]+imm;
+        break;
+
+    case op_slti:
+        NEXT_STATE.REGS[rt] = 1 ? (int)CURRENT_STATE.REGS[rs] < (int)imm : 0;
+        break;
+    
+    case op_sltiu:
+         NEXT_STATE.REGS[rt] = 1 ? CURRENT_STATE.REGS[rs] < imm : 0;
+            break;
+    
+    case op_andi:
+        NEXT_STATE.REGS[rt] = CURRENT_STATE.REGS[rs] & uimm;
+        break;
+
+    case op_ori:
+        NEXT_STATE.REGS[rt] = CURRENT_STATE.REGS[rs] | uimm;
+        break;
+
+    case op_xori:
+        NEXT_STATE.REGS[rt] = CURRENT_STATE.REGS[rs] ^ uimm;
+        break;
+
+    case op_lui:
+        NEXT_STATE.REGS[rt] = uimm << 16;
+        break;
+    
+    case op_lw:
+        NEXT_STATE.REGS[rt] = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        break;
+
+    case op_sw:
+         uint32_t Address = imm + CURRENT_STATE.REGS[rs];
+         mem_write_32(Address, CURRENT_STATE.REGS[rt]);
+        break;
+
+    case op_lb:
+        uint32_t word = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t byte = (word | 0xffffff80) ? (word & 0x80) : (word & 0xff);
+        NEXT_STATE.REGS[rt] = byte;
+        break;
+
+    case op_lbu:
+        uint32_t word = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t byte = word & 0xff;
+        NEXT_STATE.REGS[rt] = byte;
+        break;
+    
+    case op_lh:
+        uint32_t word = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t half_word = (word | 0xffff8000) ? (word & 0x8000) : (word & 0xffff);
+        NEXT_STATE.REGS[rt] = half_word;
+        break;
+
+    case op_lhu:
+        uint32_t word = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t half_word = (word & 0xffff);
+        NEXT_STATE.REGS[rt] = half_word;
+        break;
+
+    case op_sb:
+         uint32_t Address = imm + CURRENT_STATE.REGS[rs];
+         mem_write_32(Address, (CURRENT_STATE.REGS[rt]) & 0xFF);
+        break;
+    
+    case op_sh:
+        uint32_t Address = imm + CURRENT_STATE.REGS[rs];
+        mem_write_32(Address, (CURRENT_STATE.REGS[rt]) & 0xFFFF);
+        break;
+
+    case op_beq:
+        if (CURRENT_STATE.REGS[rs] == CURRENT_STATE.REGS[rt]){
+            NEXT_STATE.PC = CURRENT_STATE.PC + (imm << 2);
+            }
+        break;
+
+    case op_bne:
+        if (CURRENT_STATE.REGS[rs] != CURRENT_STATE.REGS[rt]){
+            NEXT_STATE.PC = CURRENT_STATE.PC + (imm << 2);
+            }
+        break;
+
+    case op_j:
+        NEXT_STATE.PC = (CURRENT_STATE.PC & 0xF0000000) | (target << 2);
+        break;
+
+    case op_jal:
+        NEXT_STATE.PC = (CURRENT_STATE.PC & 0xF0000000) | (target << 2);
+        NEXT_STATE.REGS[31] = CURRENT_STATE.PC + 8;
+        break;
+    default:
+        break;
+    }
+
+}
+
+void excute_branch(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t imm,uint32_t uimm){
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
+
+    switch (rt)
+    {
+    case BGEZ:
+        if(CURRENT_STATE.REGS[rs] & 0x80000000 ){  // less than  0
+            break;
+        }
+        else{  // greater than or equal to 0
+            NEXT_STATE.PC = CURRENT_STATE.PC + (imm << 2);
+        }
+        /* code */
+        break;
+    
+    case BGEZAL:
+        if(CURRENT_STATE.REGS[rs] & 0x80000000 ){  // less than  0
+            break;
+        }
+        else{  // greater than or equal to 0
+            NEXT_STATE.PC = CURRENT_STATE.PC + (imm << 2);
+            NEXT_STATE.REGS[31] = CURRENT_STATE.PC + 8;
+        }
+        /* code */
+        break;
+    
+    case BLTZ:
+        if(CURRENT_STATE.REGS[rs] & 0x80000000 ){  // less than  0
+             NEXT_STATE.PC = CURRENT_STATE.PC + (imm << 2);
+        }
+        break;
+
+    case BLTZAL:
+        if(CURRENT_STATE.REGS[rs] & 0x80000000 ){  // less than  0
+             NEXT_STATE.PC = CURRENT_STATE.PC + (imm << 2);
+             NEXT_STATE.REGS[31] = CURRENT_STATE.PC + 8;
+        }
+        break;
+    
+    default:
+        break;
+    }
 
 }
 
@@ -239,14 +410,21 @@ void process_instruction()
     uint32_t rd = (ins >> 11) & 0x1F; //ins [15:11]
     uint32_t shamt = (ins >> 6) & 0x1F; //ins[10:6]
     uint32_t funct = (ins >> 0) & 0x3F; //ins[5:0]
-    uint32_t imm = (ins >> 0) & 0xFFFF; //ins[15:0]
+    uint32_t uimm = (ins >> 0) & 0xFFFF; //ins[15:0]   //zero-extended
+    uint32_t imm = (uimm | 0xffff0000) ? (uimm & 0x8000) : uimm;  //sign-extended
     //uint32_t extend_imm = sign_extend_h2w(imm);
-    uint32_t target = ins & 0x3ffffff;
+    uint32_t target = ins & 0x3ffffff;  // ins[25:0]
     /* execute one instruction here. You should use CURRENT_STATE and modify
      * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
      * access memory. */
     if(op == op_R){
             excute_R(rs,rt,rd,shamt,funct);
+    }
+    else if (op == op_Branch){
+            excute_branch(rs,rt,rd,imm,uimm);
+    }
+    else{
+        excute_I_and_J(op,rs,rt,rd,imm,uimm,target);
     }
 
 }
