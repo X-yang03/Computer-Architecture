@@ -64,6 +64,7 @@
 #define op_beq 0x04 //beq 000100
 #define op_bne 0x05 //bne 000101
 
+#define op_blez 0x06 //blez 000110
 #define op_bgtz 0x07 //bgtz 000111
 
 #define op_Branch 0x01 // REGIMM 000001
@@ -91,19 +92,12 @@ void excute_R(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t shamt,uint32_t funct)
             printf('integer overflow exception!\n');
         }
         else{
-            NEXT_STATE.REGS[rd] = tmp;
+            NEXT_STATE.REGS[rd] =(uint32_t) tmp;
         }
         break;
 
     case funct_addu:
-        uint64_t tmp = (uint64_t)CURRENT_STATE.REGS[rs]+(uint64_t)CURRENT_STATE.REGS[rt];
-        if(tmp > UINT32_MAX)  // overflow
-        {
-            printf('integer overflow exception!\n');
-        }
-        else{
-            NEXT_STATE.REGS[rd] = tmp;
-        }
+         NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rs]+CURRENT_STATE.REGS[rt];
         break;
 
     case funct_sub:
@@ -348,6 +342,18 @@ void excute_I_and_J(uint32_t op , uint32_t rs,uint32_t rt,uint32_t rd,uint32_t i
         NEXT_STATE.PC = (CURRENT_STATE.PC & 0xF0000000) | (target << 2);
         NEXT_STATE.REGS[31] = CURRENT_STATE.PC + 8;
         break;
+
+    case op_blez:
+        if((int)CURRENT_STATE.REGS[rs] <=0 ){
+            NEXT_STATE.PC = CURRENT_STATE.PC + (imm << 2);
+        }
+        break;
+    
+    case op_bgtz:
+        if((int)CURRENT_STATE.REGS[rs] > 0 ){
+            NEXT_STATE.PC = CURRENT_STATE.PC + (imm << 2);
+        }
+        break;
     default:
         break;
     }
@@ -412,11 +418,11 @@ void process_instruction()
     uint32_t funct = (ins >> 0) & 0x3F; //ins[5:0]
     uint32_t uimm = (ins >> 0) & 0xFFFF; //ins[15:0]   //zero-extended
     uint32_t imm = (uimm | 0xffff0000) ? (uimm & 0x8000) : uimm;  //sign-extended
-    //uint32_t extend_imm = sign_extend_h2w(imm);
     uint32_t target = ins & 0x3ffffff;  // ins[25:0]
     /* execute one instruction here. You should use CURRENT_STATE and modify
      * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
      * access memory. */
+
     if(op == op_R){
             excute_R(rs,rt,rd,shamt,funct);
     }
