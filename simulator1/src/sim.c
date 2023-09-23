@@ -3,7 +3,6 @@
 
 #define op_R 0x00  //R type instruction
 
-//with 3 registers
 #define funct_add 0x20 // add 10000
 #define funct_addu 0x21 //addu 100001
 #define funct_sub 0x22 //sub 100010
@@ -25,6 +24,21 @@
 #define funct_srlv 0x06 //srlv 000110
 #define funct_srav 0x07 //srav 000111
 
+#define funct_mult 0x18 //mult 011000
+#define funct_mfhi 0x10 //mfhi 010000
+#define funct_mflo 0x12 //mflo 010010
+#define funct_mthi 0x11 //mthi 010001
+#define funct_mtlo 0x13 //mtlo 010011
+#define funct_multu 0x19 //multu 011001
+
+#define funct_div 0x1a //div 011010
+#define funct_divu 0x1b //divu 011011
+
+#define funct_jr 0x08 //jr 001000
+
+#define funct_SYSCALL 0x0a //syscall 001100
+
+#define funct_jalr 0x0b // jalr 001001
 #define funct_jr 0x08 //jr 001000
 
 // I type instructions
@@ -51,12 +65,20 @@
 #define op_beq 0x04 //beq 000100
 #define op_bne 0x05 //bne 000101
 
+#define op_bgtz 0x07 //bgtz 000111
+
+#define op_Branch 0x01 // REGIMM 000001
+#define BGEZ 0x01 //BGEZ 00001
+#define BGEZAL 0x11 // BGEZAL 10001
+#define BLTZ 0x00 //bltz 00000
+#define BLTZAL 0x10 //BLTZAL 10000
+
 
 //J type
 
+#define op_j 0x02 //J 000010
+#define op_jal 0x03 //jal 000011
 
-
-#define funct_addu
 
 
 
