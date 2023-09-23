@@ -34,7 +34,6 @@
 #define funct_div 0x1a //div 011010
 #define funct_divu 0x1b //divu 011011
 
-#define funct_jr 0x08 //jr 001000
 
 #define funct_SYSCALL 0x0a //syscall 001100
 
@@ -79,14 +78,175 @@
 #define op_j 0x02 //J 000010
 #define op_jal 0x03 //jal 000011
 
+void excute_R(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t shamt,uint32_t funct){
 
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 
+    switch (funct)
+    {
+    case funct_add:
+        NEXT_STATE.REGS[rd] = (int)CURRENT_STATE.REGS[rs]+(int)CURRENT_STATE.REGS[rt];
+        break;
+
+    case funct_addu:
+        NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rs]+CURRENT_STATE.REGS[rt];
+        break;
+
+    case funct_sub:
+        NEXT_STATE.REGS[rd] = (int)CURRENT_STATE.REGS[rs]-(int)CURRENT_STATE.REGS[rt];
+        break;
+
+    case funct_subu:
+         NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rs]-CURRENT_STATE.REGS[rt];
+        break;
+
+    case funct_and:
+         NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rs] & CURRENT_STATE.REGS[rt];
+        break;
+
+    case funct_or:
+        NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rs] | CURRENT_STATE.REGS[rt];
+        break;
+
+    case funct_xor:
+        NEXT_STATE.REGS[rd] = CURRENT_STATE.REGS[rs] ^ CURRENT_STATE.REGS[rt];
+        break;
+
+    case funct_nor :
+        NEXT_STATE.REGS[rd] = ~(CURRENT_STATE.REGS[rs] | CURRENT_STATE.REGS[rt]);
+        break;
+
+    case funct_slt:
+        NEXT_STATE.REGS[rd] = 1 ? ((int)CURRENT_STATE.REGS[rs]<(int)CURRENT_STATE.REGS[rt]) : 0;
+        break;
+
+    case funct_sltu:
+        NEXT_STATE.REGS[rd] = 1 ? (CURRENT_STATE.REGS[rs]<CURRENT_STATE.REGS[rt]) : 0;
+        break;
+
+    case funct_sll:
+        NEXT_STATE.REGS[rd]=CURRENT_STATE.REGS[rt] << shamt;
+        break;
+
+    case funct_srl:
+         NEXT_STATE.REGS[rd]=(uint32_t)(CURRENT_STATE.REGS[rt] >> shamt);
+        break;
+
+    case funct_sra:
+        NEXT_STATE.REGS[rd] = (int)(CURRENT_STATE.REGS[rt] >> shamt);
+         break;
+
+    case funct_sllv:
+         NEXT_STATE.REGS[rd]=CURRENT_STATE.REGS[rt] << CURRENT_STATE.REGS[rs];
+        break;
+    
+    case funct_srlv:
+         NEXT_STATE.REGS[rd]=(uint32_t)(CURRENT_STATE.REGS[rt] >> CURRENT_STATE.REGS[rs]);
+        break;
+    
+    case funct_srav:
+        NEXT_STATE.REGS[rd] = (int)(CURRENT_STATE.REGS[rt] >> CURRENT_STATE.REGS[rs]);
+         break;
+
+    case funct_mult:
+        int64_t mult = (int64_t)CURRENT_STATE.REGS[rs] * (int64_t)CURRENT_STATE.REGS[rt];
+        NEXT_STATE.HI = (uint32_t)mult >> 32;
+        NEXT_STATE.LO =(uint32_t) mult&0x00000000FFFFFFFF;
+        break;
+    
+    case funct_multu:
+        uint64_t mult = (uint64_t)CURRENT_STATE.REGS[rs] * (uint64_t)CURRENT_STATE.REGS[rt];
+        NEXT_STATE.HI = (uint32_t)mult >> 32;
+        NEXT_STATE.LO =(uint32_t) mult&0x00000000FFFFFFFF;
+        break;
+
+    case funct_mfhi:
+         NEXT_STATE.REGS[rd] = CURRENT_STATE.HI;
+        break;
+
+    case funct_mflo:
+         NEXT_STATE.REGS[rd] = CURRENT_STATE.LO;
+        break;
+
+    case funct_mthi:
+        NEXT_STATE.HI = CURRENT_STATE.REGS[rd];
+        break;
+
+    case funct_mtlo:
+        NEXT_STATE.LO = CURRENT_STATE.REGS[rd];
+        break;
+
+    case funct_div:
+        if (CURRENT_STATE.REGS[rt]== 0)
+                        exit(1);
+                    
+        NEXT_STATE.HI=((int)CURRENT_STATE.REGS[rs] % (int)CURRENT_STATE.REGS[rt]);
+
+        NEXT_STATE.LO=((int)CURRENT_STATE.REGS[rs] / (int)CURRENT_STATE.REGS[rt]);
+        break;
+    
+    case funct_divu:
+        if (CURRENT_STATE.REGS[rt]== 0)
+                        exit(1);
+                    
+        NEXT_STATE.HI=((uint32_t)CURRENT_STATE.REGS[rs] % (uint32_t)CURRENT_STATE.REGS[rt]);
+
+        NEXT_STATE.LO=((uint32_t)CURRENT_STATE.REGS[rs] / (uint32_t)CURRENT_STATE.REGS[rt]);
+        break;
+
+    case funct_jr:
+        if(CURRENT_STATE.REGS[rs] % 32 != 0) // not word-aligned
+            {
+                printf('address is not word-aligned!\n');
+                exit(1);
+            }
+        NEXT_STATE.PC = CURRENT_STATE.REGS[rs];
+        break;
+
+    case funct_jalr:
+        if(CURRENT_STATE.REGS[rs] % 32 != 0) // not word-aligned
+            {
+                printf('address is not word-aligned!\n');
+                exit(1);
+            }
+        NEXT_STATE.REGS[rd] = CURRENT_STATE.PC + 8;
+        NEXT_STATE.PC = CURRENT_STATE.REGS[rs];
+        break;
+    
+    case funct_SYSCALL:
+        if (CURRENT_STATE.REGS[2] == 0x0a)
+            RUN_BIT = 0;
+        break;
+
+    default:
+
+        break;
+    }
+}
+
+void excute_I_and_J(uint32_t op , uint32_t rs,uint32_t rt,uint32_t rd,uint32_t imm,uint32_t target){
+
+}
 
 void process_instruction()
 {
     uint32_t ins = mem_read_32(CURRENT_STATE.PC);  //read the instruction to be processed via PC register
 
+
+    uint32_t op = (ins >> 26) & 0x3F; // ins[31:26]
+    uint32_t rs = (ins >> 21) & 0x1F; // ins[25:21]
+    uint32_t rt = (ins >> 16) & 0x1F; //ins [20:16]
+    uint32_t rd = (ins >> 11) & 0x1F; //ins [15:11]
+    uint32_t shamt = (ins >> 6) & 0x1F; //ins[10:6]
+    uint32_t funct = (ins >> 0) & 0x3F; //ins[5:0]
+    uint32_t imm = (ins >> 0) & 0xFFFF; //ins[15:0]
+    //uint32_t extend_imm = sign_extend_h2w(imm);
+    uint32_t target = ins & 0x3ffffff;
     /* execute one instruction here. You should use CURRENT_STATE and modify
      * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
      * access memory. */
+    if(op == op_R){
+            excute_R(rs,rt,rd,shamt,funct);
+    }
+
 }
