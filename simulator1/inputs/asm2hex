@@ -11,7 +11,8 @@ fasm = args.fasm
 fhex = os.path.splitext(args.fasm)[0] + ".x"
 
 # run SPIM (the actual MIPS assembler)
-SPIM = "/afs/ece/class/ece447/bin/spim447"
+#SPIM = "/afs/ece/class/ece447/bin/spim447"
+SPIM = "D:\soft\Spim"
 cmd = [SPIM, "-notrap", "-vasm", fasm, fhex]
 subprocess.call(cmd)
 

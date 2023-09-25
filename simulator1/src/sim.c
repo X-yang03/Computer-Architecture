@@ -86,14 +86,7 @@ void excute_R(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t shamt,uint32_t funct)
     switch (funct)
     {
     case funct_add:
-        int64_t tmp = (int64_t)CURRENT_STATE.REGS[rs]+(int64_t)CURRENT_STATE.REGS[rt];
-        if(tmp > INT32_MAX || tmp < INT32_MIN)  // overflow
-        {
-            printf('integer overflow exception!\n');
-        }
-        else{
-            NEXT_STATE.REGS[rd] =(uint32_t) tmp;
-        }
+        NEXT_STATE.REGS[rd] = (int)CURRENT_STATE.REGS[rs]+(int)CURRENT_STATE.REGS[rt];
         break;
 
     case funct_addu:
@@ -150,7 +143,7 @@ void excute_R(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t shamt,uint32_t funct)
         break;
     
     case funct_srlv:
-         NEXT_STATE.REGS[rd]=(uint32_t)(CURRENT_STATE.REGS[rt] >> CURRENT_STATE.REGS[rs]);
+         NEXT_STATE.REGS[rd]=(CURRENT_STATE.REGS[rt] >> CURRENT_STATE.REGS[rs]);
         break;
     
     case funct_srav:
