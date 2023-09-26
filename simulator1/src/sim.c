@@ -36,7 +36,7 @@
 #define funct_divu 0x1b //divu 011011
 
 
-#define funct_SYSCALL 0x0a //syscall 001100
+#define funct_SYSCALL 0x0c //syscall 001100
 
 #define funct_jalr 0x0b // jalr 001001
 #define funct_jr 0x08 //jr 001000
