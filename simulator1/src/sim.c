@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include<stdlib.h>
 #include "shell.h"
 
 #define op_R 0x00  //R type instruction
@@ -119,11 +120,11 @@ void excute_R(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t shamt,uint32_t funct)
         break;
 
     case funct_slt:
-        NEXT_STATE.REGS[rd] = 1 ? ((int)CURRENT_STATE.REGS[rs]<(int)CURRENT_STATE.REGS[rt]) : 0;
+        NEXT_STATE.REGS[rd] =  ((int)CURRENT_STATE.REGS[rs]<(int)CURRENT_STATE.REGS[rt]) ? 1: 0;
         break;
 
     case funct_sltu:
-        NEXT_STATE.REGS[rd] = 1 ? (CURRENT_STATE.REGS[rs]<CURRENT_STATE.REGS[rt]) : 0;
+        NEXT_STATE.REGS[rd] =  (CURRENT_STATE.REGS[rs]<CURRENT_STATE.REGS[rt]) ? 1 : 0;
         break;
 
     case funct_sll:
@@ -152,14 +153,14 @@ void excute_R(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t shamt,uint32_t funct)
 
     case funct_mult:
         int64_t mult = (int64_t)CURRENT_STATE.REGS[rs] * (int64_t)CURRENT_STATE.REGS[rt];
-        NEXT_STATE.HI = (uint32_t)mult >> 32;
-        NEXT_STATE.LO =(uint32_t) mult&0x00000000FFFFFFFF;
+        NEXT_STATE.HI = (mult >> 32);
+        NEXT_STATE.LO = mult&0x00000000FFFFFFFF;
         break;
     
     case funct_multu:
-        uint64_t mult = (uint64_t)CURRENT_STATE.REGS[rs] * (uint64_t)CURRENT_STATE.REGS[rt];
-        NEXT_STATE.HI = (uint32_t)mult >> 32;
-        NEXT_STATE.LO =(uint32_t) mult&0x00000000FFFFFFFF;
+        uint64_t multu = (uint64_t)CURRENT_STATE.REGS[rs] * (uint64_t)CURRENT_STATE.REGS[rt];
+        NEXT_STATE.HI = multu >> 32;
+        NEXT_STATE.LO =(uint32_t) multu&0x00000000FFFFFFFF;
         break;
 
     case funct_mfhi:
@@ -197,20 +198,10 @@ void excute_R(uint32_t rs,uint32_t rt,uint32_t rd,uint32_t shamt,uint32_t funct)
         break;
 
     case funct_jr:
-        if(CURRENT_STATE.REGS[rs] % 32 != 0) // not word-aligned
-            {
-                printf('address is not word-aligned!\n');
-                exit(1);
-            }
         NEXT_STATE.PC = CURRENT_STATE.REGS[rs];
         break;
 
     case funct_jalr:
-        if(CURRENT_STATE.REGS[rs] % 32 != 0) // not word-aligned
-            {
-                printf('address is not word-aligned!\n');
-                exit(1);
-            }
         if(rd == 0){
             rd =31;
         }
@@ -235,13 +226,7 @@ void excute_I_and_J(uint32_t op , uint32_t rs,uint32_t rt,uint32_t rd,uint32_t i
     switch (op)
     {
     case op_addi:
-        int64_t tmp = (int)CURRENT_STATE.REGS[rs]+imm;
-        if(tmp > INT32_MAX || tmp < INT32_MIN){
-            printf('integer overflow!\n');
-        }
-        else{
-            NEXT_STATE.REGS[rt]=(int32_t)tmp;
-        }
+        NEXT_STATE.REGS[rt] = (int)CURRENT_STATE.REGS[rs]+imm;
             break;
         
     case op_addiu:
@@ -249,11 +234,11 @@ void excute_I_and_J(uint32_t op , uint32_t rs,uint32_t rt,uint32_t rd,uint32_t i
         break;
 
     case op_slti:
-        NEXT_STATE.REGS[rt] = 1 ? (int)CURRENT_STATE.REGS[rs] < (int)imm : 0;
+        NEXT_STATE.REGS[rt] = (int)CURRENT_STATE.REGS[rs] < (int)imm ? 1 : 0;
         break;
     
     case op_sltiu:
-         NEXT_STATE.REGS[rt] = 1 ? CURRENT_STATE.REGS[rs] < imm : 0;
+         NEXT_STATE.REGS[rt] = CURRENT_STATE.REGS[rs] < imm ? 1 : 0;
             break;
     
     case op_andi:
@@ -283,36 +268,36 @@ void excute_I_and_J(uint32_t op , uint32_t rs,uint32_t rt,uint32_t rd,uint32_t i
 
     case op_lb:
         uint32_t word = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
-        uint32_t byte = (word | 0xffffff80) ? (word & 0x80) : (word & 0xff);
+        uint32_t byte =  (word & 0x80) ? (word | 0xffffff80) : (word & 0xff);
         NEXT_STATE.REGS[rt] = byte;
         break;
 
     case op_lbu:
-        uint32_t word = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
-        uint32_t byte = word & 0xff;
-        NEXT_STATE.REGS[rt] = byte;
+        uint32_t wordTobu = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t byteu = wordTobu & 0xff;
+        NEXT_STATE.REGS[rt] = byteu;
         break;
     
     case op_lh:
-        uint32_t word = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
-        uint32_t half_word = (word | 0xffff8000) ? (word & 0x8000) : (word & 0xffff);
+        uint32_t wordToh = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t half_word = (word & 0x8000) ? (wordToh | 0xffff8000) : (word & 0xffff) ;
         NEXT_STATE.REGS[rt] = half_word;
         break;
 
     case op_lhu:
-        uint32_t word = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
-        uint32_t half_word = (word & 0xffff);
-        NEXT_STATE.REGS[rt] = half_word;
+        uint32_t wordTohu = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t half_wordu = (word & 0xffff);
+        NEXT_STATE.REGS[rt] = half_wordu;
         break;
 
     case op_sb:
-         uint32_t Address = imm + CURRENT_STATE.REGS[rs];
-         mem_write_32(Address, (CURRENT_STATE.REGS[rt]) & 0xFF);
+         uint32_t Address_sb = imm + CURRENT_STATE.REGS[rs];
+         mem_write_32(Address_sb, (CURRENT_STATE.REGS[rt]) & 0xFF);
         break;
     
     case op_sh:
-        uint32_t Address = imm + CURRENT_STATE.REGS[rs];
-        mem_write_32(Address, (CURRENT_STATE.REGS[rt]) & 0xFFFF);
+        uint32_t Address_sh = imm + CURRENT_STATE.REGS[rs];
+        mem_write_32(Address_sh, (CURRENT_STATE.REGS[rt]) & 0xFFFF);
         break;
 
     case op_beq:
@@ -408,9 +393,9 @@ void process_instruction()
     uint32_t rt = (ins >> 16) & 0x1F; //ins [20:16]
     uint32_t rd = (ins >> 11) & 0x1F; //ins [15:11]
     uint32_t shamt = (ins >> 6) & 0x1F; //ins[10:6]
-    uint32_t funct = (ins >> 0) & 0x3F; //ins[5:0]
-    uint32_t uimm = (ins >> 0) & 0xFFFF; //ins[15:0]   //zero-extended
-    uint32_t imm = (uimm | 0xffff0000) ? (uimm & 0x8000) : uimm;  //sign-extended
+    uint32_t funct = ins  & 0x3F; //ins[5:0]
+    uint32_t uimm = ins & 0xFFFF; //ins[15:0]   //zero-extended
+    uint32_t imm = (uimm & 0x8000) ? (uimm | 0xffff0000) : uimm;  //sign-extended
     uint32_t target = ins & 0x3ffffff;  // ins[25:0]
     /* execute one instruction here. You should use CURRENT_STATE and modify
      * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
