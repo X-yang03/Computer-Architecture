@@ -280,13 +280,13 @@ void excute_I_and_J(uint32_t op , uint32_t rs,uint32_t rt,uint32_t rd,uint32_t i
     
     case op_lh:
         uint32_t wordToh = mem_read_32(CURRENT_STATE.REGS[rs] + (int)imm);
-        uint32_t half_word = (word & 0x8000) ? (wordToh | 0xffff8000) : (word & 0xffff) ;
+        uint32_t half_word = (wordToh & 0x8000) ? (wordToh | 0xffff8000) : (wordToh & 0xffff) ;
         NEXT_STATE.REGS[rt] = half_word;
         break;
 
     case op_lhu:
         uint32_t wordTohu = mem_read_32(CURRENT_STATE.REGS[rs] + (int)imm);
-        uint32_t half_wordu = (word & 0xffff);
+        uint32_t half_wordu = (wordTohu & 0xffff);
         NEXT_STATE.REGS[rt] = half_wordu;
         break;
 
