@@ -3,7 +3,7 @@
 
         # J, JR, JAL, JALR, BEQ, BNE, BLEZ, BGTZ, BLTZ, BGEZ, BLTZAL, BGEZAL
         # BLTZAL, BGEZAL
-
+main:
         addiu $v0, $zero, 0xa
 
         # Set up some comparison values in registers
@@ -66,7 +66,7 @@ l_12:
         bgezal $4, l_11
         
 l_13:    
-        addiu $5, $5, 0x0d
+        addiu $5, $5, 0xbeb0063d
         syscall
         
         

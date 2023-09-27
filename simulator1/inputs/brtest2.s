@@ -1,6 +1,7 @@
         # Basic branch test
 	.text
 
+main:
         addiu $v0, $zero, 0xa
 l_0:    
         j l_1
@@ -14,7 +15,7 @@ l_3:
 	addiu $7, $zero, 0x1337
         # Should not reach here
 l_4:
-        addiu $7, $zero, 0x0d
+        addiu $7, $zero, 0xd00d
         syscall
         
          
