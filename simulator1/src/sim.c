@@ -226,7 +226,7 @@ void excute_I_and_J(uint32_t op , uint32_t rs,uint32_t rt,uint32_t rd,uint32_t i
     switch (op)
     {
     case op_addi:
-        NEXT_STATE.REGS[rt] = (int)CURRENT_STATE.REGS[rs]+imm;
+        NEXT_STATE.REGS[rt] = (int)CURRENT_STATE.REGS[rs]+(int)imm;
             break;
         
     case op_addiu:
@@ -258,45 +258,45 @@ void excute_I_and_J(uint32_t op , uint32_t rs,uint32_t rt,uint32_t rd,uint32_t i
         break;
     
     case op_lw:
-        NEXT_STATE.REGS[rt] = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        NEXT_STATE.REGS[rt] = mem_read_32(CURRENT_STATE.REGS[rs] + (int)imm);
         break;
 
     case op_sw:
-         uint32_t Address = imm + CURRENT_STATE.REGS[rs];
+         uint32_t Address = (int)imm + CURRENT_STATE.REGS[rs];
          mem_write_32(Address, CURRENT_STATE.REGS[rt]);
         break;
 
     case op_lb:
-        uint32_t word = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t word = mem_read_32(CURRENT_STATE.REGS[rs] + (int)imm);
         uint32_t byte =  (word & 0x80) ? (word | 0xffffff80) : (word & 0xff);
         NEXT_STATE.REGS[rt] = byte;
         break;
 
     case op_lbu:
-        uint32_t wordTobu = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t wordTobu = mem_read_32(CURRENT_STATE.REGS[rs] + (int)imm);
         uint32_t byteu = wordTobu & 0xff;
         NEXT_STATE.REGS[rt] = byteu;
         break;
     
     case op_lh:
-        uint32_t wordToh = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t wordToh = mem_read_32(CURRENT_STATE.REGS[rs] + (int)imm);
         uint32_t half_word = (word & 0x8000) ? (wordToh | 0xffff8000) : (word & 0xffff) ;
         NEXT_STATE.REGS[rt] = half_word;
         break;
 
     case op_lhu:
-        uint32_t wordTohu = mem_read_32(CURRENT_STATE.REGS[rs] + imm);
+        uint32_t wordTohu = mem_read_32(CURRENT_STATE.REGS[rs] + (int)imm);
         uint32_t half_wordu = (word & 0xffff);
         NEXT_STATE.REGS[rt] = half_wordu;
         break;
 
     case op_sb:
-         uint32_t Address_sb = imm + CURRENT_STATE.REGS[rs];
+         uint32_t Address_sb = (int)imm + CURRENT_STATE.REGS[rs];
          mem_write_32(Address_sb, (CURRENT_STATE.REGS[rt]) & 0xFF);
         break;
     
     case op_sh:
-        uint32_t Address_sh = imm + CURRENT_STATE.REGS[rs];
+        uint32_t Address_sh = (int)imm + CURRENT_STATE.REGS[rs];
         mem_write_32(Address_sh, (CURRENT_STATE.REGS[rt]) & 0xFFFF);
         break;
 
